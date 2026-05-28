@@ -7,4 +7,3 @@ import com.example.SuperMarket.entity.Category;
 @Repository
 public interface Categoryrepository extends JpaRepository<Category, Long> {
 }
-q
