@@ -7,7 +7,7 @@ import lombok.Data;
 @Data
 public class EmployeeResponseDto {
     /**
-     * id del empleado
+     * id del empleado.
      */
     private Long id;
     /**
