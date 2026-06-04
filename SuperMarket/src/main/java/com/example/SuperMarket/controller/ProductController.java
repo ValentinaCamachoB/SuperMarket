@@ -13,11 +13,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.SuperMarket.Service.ProductService;
-import com.example.SuperMarket.dto.Httpglobalresponse;
-import com.example.SuperMarket.dto.Messageresponsedto;
-import com.example.SuperMarket.dto.Productrequestdto;
-import com.example.SuperMarket.dto.Productresponsedto;
+import com.example.SuperMarket.dto.HttpGlobalResponse;
+import com.example.SuperMarket.dto.MessageResponseDto;
+import com.example.SuperMarket.dto.ProductRequestDto;
+import com.example.SuperMarket.dto.ProductResponseDto;
+import com.example.SuperMarket.service.ProductService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,14 +25,17 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/products")
 @RequiredArgsConstructor
-public class Productcontroller {
+public class ProductController {
 
     private final ProductService productService;
 
+    /**
+     * Crea un nuevo producto
+     */
     @PostMapping("/create")
-    public ResponseEntity<Messageresponsedto> createProduct(@Valid @RequestBody Productrequestdto request) {
+    public ResponseEntity<MessageResponseDto> createProduct(@Valid @RequestBody ProductRequestDto request) {
         try {
-            Messageresponsedto response = productService.createProduct(request);
+            MessageResponseDto response = productService.createProduct(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (Exception e) {
             e.printStackTrace();
@@ -40,27 +43,36 @@ public class Productcontroller {
         }
     }
 
-
+    /**
+     * Obtiene la lista de todos los productos
+     */
     @GetMapping("/get-products")
-    public List<Productresponsedto> getProducts() {
+    public List<ProductResponseDto> getProducts() {
         return productService.getProducts();
     }
 
+    /**
+     * Obtiene un producto por su identificador
+     */
     @GetMapping("/get-product/{id}")
-    public Httpglobalresponse<Productresponsedto> getProduct(@PathVariable Long id) {
+    public HttpGlobalResponse<ProductResponseDto> getProduct(@PathVariable Long id) {
         return productService.getProduct(id);
     }
 
-
+    /**
+     * Actualiza un producto existente
+     */
     @PutMapping("/update-product/{id}")
-    public Httpglobalresponse<Productresponsedto> updateProduct(@PathVariable Long id,
-            @Valid @RequestBody Productrequestdto request) {
+    public HttpGlobalResponse<ProductResponseDto> updateProduct(@PathVariable Long id,
+            @Valid @RequestBody ProductRequestDto request) {
         return productService.updateProduct(id, request);
     }
 
-   
+    /**
+     * Desactiva un producto
+     */
     @DeleteMapping("/delete-product/{id}")
-    public Httpglobalresponse<Productresponsedto> deactivateProduct(@PathVariable Long id) {
+    public HttpGlobalResponse<ProductResponseDto> deactivateProduct(@PathVariable Long id) {
         return productService.deactivateProduct(id);
     }
 }

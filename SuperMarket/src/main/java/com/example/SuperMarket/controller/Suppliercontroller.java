@@ -13,12 +13,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.SuperMarket.Service.Supplierservice;
-import com.example.SuperMarket.dto.Httpglobalresponse;
-import com.example.SuperMarket.dto.Messageresponsedto;
-import com.example.SuperMarket.dto.Supplierrequestdto;
-import com.example.SuperMarket.dto.Supplierresponsedto;
-import com.example.SuperMarket.dto.Warehouseentryrequestdto;
+import com.example.SuperMarket.dto.HttpGlobalResponse;
+import com.example.SuperMarket.dto.MessageResponseDto;
+import com.example.SuperMarket.dto.SupplierRequestDto;
+import com.example.SuperMarket.dto.SupplierResponseDto;
+import com.example.SuperMarket.dto.WarehouseEntryRequestDto;
+import com.example.SuperMarket.service.SupplierService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,15 +26,17 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/suppliers")
 @RequiredArgsConstructor
-public class Suppliercontroller {
+public class SupplierController {
 
-    private final Supplierservice supplierService;
+    private final SupplierService supplierService;
 
-    // FIX: recibe Supplierrequestdto (no Salerequestdto)
+    /**
+     * Crea un nuevo proveedor
+     */
     @PostMapping("/create")
-    public ResponseEntity<Messageresponsedto> createSupplier(@Valid @RequestBody Supplierrequestdto request) {
+    public ResponseEntity<MessageResponseDto> createSupplier(@Valid @RequestBody SupplierRequestDto request) {
         try {
-            Messageresponsedto response = supplierService.createSupplier(request);
+            MessageResponseDto response = supplierService.createSupplier(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (Exception e) {
             e.printStackTrace();
@@ -42,35 +44,46 @@ public class Suppliercontroller {
         }
     }
 
-    // FIX: retorna List<Supplierresponsedto> (response, no request)
+    /**
+     * Obtiene la lista de todos los proveedores
+     */
     @GetMapping("/get-suppliers")
-    public List<Supplierresponsedto> getSuppliers() {
+    public List<SupplierResponseDto> getSuppliers() {
         return supplierService.getSuppliers();
     }
 
-    // FIX: retorna Httpglobalresponse<Supplierresponsedto> (response, no request)
+    /**
+     * Obtiene un proveedor por su identificador
+     */
     @GetMapping("/get-supplier/{id}")
-    public Httpglobalresponse<Supplierresponsedto> getSupplier(@PathVariable Long id) {
+    public HttpGlobalResponse<SupplierResponseDto> getSupplier(@PathVariable Long id) {
         return supplierService.getSupplier(id);
     }
 
-    // FIX: retorna Httpglobalresponse<Supplierresponsedto> (response, no request)
+    /**
+     * Actualiza los datos de un proveedor existente
+     */
     @PutMapping("/update-supplier/{id}")
-    public Httpglobalresponse<Supplierresponsedto> updateSupplier(@PathVariable Long id,
-            @Valid @RequestBody Supplierrequestdto request) {
+    public HttpGlobalResponse<SupplierResponseDto> updateSupplier(@PathVariable Long id,
+            @Valid @RequestBody SupplierRequestDto request) {
         return supplierService.updateSupplier(id, request);
     }
 
-    // FIX: retorna Httpglobalresponse<Supplierresponsedto> (response, no request)
+    /**
+     * Elimina un proveedor por su identificador
+     */
     @DeleteMapping("/delete-supplier/{id}")
-    public Httpglobalresponse<Supplierresponsedto> deleteSupplier(@PathVariable Long id) {
+    public HttpGlobalResponse<SupplierResponseDto> deleteSupplier(@PathVariable Long id) {
         return supplierService.deleteSupplier(id);
     }
 
+    /**
+     * Registra una entrada de mercancia al almacen
+     */
     @PostMapping("/warehouse-entry")
-    public ResponseEntity<Messageresponsedto> warehouseEntry(@Valid @RequestBody Warehouseentryrequestdto request) {
+    public ResponseEntity<MessageResponseDto> warehouseEntry(@Valid @RequestBody WarehouseEntryRequestDto request) {
         try {
-            Messageresponsedto response = supplierService.warehouseEntry(request);
+            MessageResponseDto response = supplierService.warehouseEntry(request);
             return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (Exception e) {
             e.printStackTrace();

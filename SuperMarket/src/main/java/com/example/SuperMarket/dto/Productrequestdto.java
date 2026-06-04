@@ -4,23 +4,24 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
- 
+
 @Data
-public class Productrequestdto {
- 
-    @NotBlank(message = "Product name is required")
+public class ProductRequestDto {
+
+    @NotBlank(message = "El nombre del producto es requerido")
     private String name;
- 
-    @NotBlank(message = "Barcode is required")
+
+    @NotBlank(message = "El código de barras es requerido")
     private String barcode;
- 
-    @NotNull(message = "Price is required")
-    @Min(value = 0, message = "Price must be 0 or greater")
+
+    @NotNull(message = "El precio es requerido")
+    @Min(value = 0, message = "El precio debe ser 0 o mayor")
     private Double price;
- 
-    @Min(value = 0, message = "Stock cannot be negative")
+
+    @NotNull(message = "El stock es requerido")
+    @Min(value = 0, message = "El stock no puede ser negativo")
     private Integer stock;
- 
-    @NotNull(message = "Category ID is required")
+
+    @NotNull(message = "El ID de la categoría es requerido")
     private Long categoryId;
 }

@@ -16,11 +16,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.SuperMarket.Service.Employeeservice;
-import com.example.SuperMarket.dto.Employeerequestdto;
-import com.example.SuperMarket.dto.Employeeresponsedto;
-import com.example.SuperMarket.dto.Httpglobalresponse;
-import com.example.SuperMarket.dto.Messageresponsedto;
+import com.example.SuperMarket.dto.EmployeeRequestDto;
+import com.example.SuperMarket.dto.EmployeeResponseDto;
+import com.example.SuperMarket.dto.HttpGlobalResponse;
+import com.example.SuperMarket.dto.MessageResponseDto;
+import com.example.SuperMarket.service.EmployeeService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -28,46 +28,46 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/employees")
 @RequiredArgsConstructor
-public class Employeecontroller {
+public class EmployeeController {
 
-    private final Employeeservice employeeService;
-    
+    private final EmployeeService employeeService;
+
     /**
-     * Crea un nuevo empledo
+     * Crea un nuevo empleado
      */
     @PostMapping("/create")
-    public ResponseEntity<Messageresponsedto> createEmployee(@Valid @RequestBody Employeerequestdto request) {
+    public ResponseEntity<MessageResponseDto> createEmployee(@Valid @RequestBody EmployeeRequestDto request) {
         try {
-            Messageresponsedto response = employeeService.createEmployee(request);
+            MessageResponseDto response = employeeService.createEmployee(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
         }
     }
-    
+
     /**
      * Obtiene la lista de todos los empleados
      */
     @GetMapping("/get-employees")
-    public List<Employeeresponsedto> getEmployees() {
+    public List<EmployeeResponseDto> getEmployees() {
         return employeeService.getEmployees();
     }
-    
+
     /**
      * Obtiene un empleado por su identificador
      */
     @GetMapping("/get-employee/{id}")
-    public Httpglobalresponse<Employeeresponsedto> getEmployee(@PathVariable Long id) {
+    public HttpGlobalResponse<EmployeeResponseDto> getEmployee(@PathVariable Long id) {
         return employeeService.getEmployee(id);
     }
-    
+
     /**
      * Actualiza los datos de un empleado existente
      */
     @PutMapping("/update-employee/{id}")
-    public Httpglobalresponse<Employeeresponsedto> updateEmployee(@PathVariable Long id,
-            @Valid @RequestBody Employeerequestdto request) {
+    public HttpGlobalResponse<EmployeeResponseDto> updateEmployee(@PathVariable Long id,
+            @Valid @RequestBody EmployeeRequestDto request) {
         return employeeService.updateEmployee(id, request);
     }
 
@@ -75,26 +75,25 @@ public class Employeecontroller {
      * Elimina un empleado por su identificador
      */
     @DeleteMapping("/delete-employee/{id}")
-    public Httpglobalresponse<Employeeresponsedto> deleteEmployee(@PathVariable Long id) {
+    public HttpGlobalResponse<EmployeeResponseDto> deleteEmployee(@PathVariable Long id) {
         return employeeService.deleteEmployee(id);
     }
 
     /**
-     * Obtiene empleados filtrados por posición,  Regla de negocio: filtrar por cargo/posición
+     * Empleados filtrados por posicion
      */
     @GetMapping("/by-position")
-    public List<Employeeresponsedto> getEmployeesByPosition(@RequestParam String position) {
+    public List<EmployeeResponseDto> getEmployeesByPosition(@RequestParam String position) {
         return employeeService.getEmployeesByPosition(position);
     }
 
     /**
-     * Obtiene empleados contratados dentro de un rango de fechas, Regla de negocio: filtrar por rango de fecha de contratación
+     * Empleados contratados dentro de un rango de fechas
      */
     @GetMapping("/by-date")
-    public List<Employeeresponsedto> getEmployeesByDateRange(
+    public List<EmployeeResponseDto> getEmployeesByDateRange(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         return employeeService.getEmployeesByDateRange(startDate, endDate);
     }
 }
-

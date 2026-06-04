@@ -13,11 +13,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
  
-import com.example.SuperMarket.Service.CategoryService;
-import com.example.SuperMarket.dto.Categoryrequestdto;
-import com.example.SuperMarket.dto.Categoryresponsedto;
-import com.example.SuperMarket.dto.Httpglobalresponse;
-import com.example.SuperMarket.dto.Messageresponsedto;
+import com.example.SuperMarket.dto.CategoryRequestDto;
+import com.example.SuperMarket.dto.CategoryResponseDto;
+import com.example.SuperMarket.dto.HttpGlobalResponse;
+import com.example.SuperMarket.dto.MessageResponseDto;
+import com.example.SuperMarket.service.CategoryService;
  
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,38 +26,53 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/categories")
 @RequiredArgsConstructor
 public class CategoryController {
- 
+
     private final CategoryService categoryService;
- 
+
+    /**
+     * Crea una nueva categoria
+     */
     @PostMapping("/create")
-    public ResponseEntity<Messageresponsedto> createCategory(@Valid @RequestBody Categoryrequestdto request) {
+    public ResponseEntity<MessageResponseDto> createCategory(@Valid @RequestBody CategoryRequestDto request) {
         try {
-            Messageresponsedto response = categoryService.createCategory(request);
+            MessageResponseDto response = categoryService.createCategory(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
         }
     }
- 
+
+    /**
+     * Obtiene la lista de todas las categorias
+     */
     @GetMapping("/get-categories")
-    public List<Categoryresponsedto> getCategories() {
+    public List<CategoryResponseDto> getCategories() {
         return categoryService.getCategories();
     }
- 
+
+    /**
+     * Obtiene una categoria por su identificador
+     */
     @GetMapping("/get-category/{id}")
-    public Httpglobalresponse<Categoryresponsedto> getCategory(@PathVariable Long id) {
+    public HttpGlobalResponse<CategoryResponseDto> getCategory(@PathVariable Long id) {
         return categoryService.getCategory(id);
     }
- 
+
+    /**
+     * Actualiza una categoria existente
+     */
     @PutMapping("/update-category/{id}")
-    public Httpglobalresponse<Categoryresponsedto> updateCategory(@PathVariable Long id,
-            @Valid @RequestBody Categoryrequestdto request) {
+    public HttpGlobalResponse<CategoryResponseDto> updateCategory(@PathVariable Long id,
+            @Valid @RequestBody CategoryRequestDto request) {
         return categoryService.updateCategory(id, request);
     }
- 
+
+    /**
+     * Elimina una categoria por su identificador
+     */
     @DeleteMapping("/delete-category/{id}")
-    public Httpglobalresponse<Categoryresponsedto> deleteCategory(@PathVariable Long id) {
+    public HttpGlobalResponse<CategoryResponseDto> deleteCategory(@PathVariable Long id) {
         return categoryService.deleteCategory(id);
     }
 }

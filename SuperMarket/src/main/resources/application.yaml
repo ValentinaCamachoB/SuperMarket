@@ -5,13 +5,20 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/micromarket_db
     username: root
-    password: 
+    password:
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
     hibernate:
-      ddl-auto: update   
+      ddl-auto: update
     show-sql: true
+    defer-datasource-initialization: true
+
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+      data-locations: classpath:data.sql
 
 server:
-  port: 1234
+  port: 8080

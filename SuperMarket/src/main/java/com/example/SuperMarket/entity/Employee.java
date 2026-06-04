@@ -25,9 +25,6 @@ public class Employee {
     @Column(name = "name")
     private String name;
  
-    /**
-     * la validación se realiza en la capa de servicio
-     */
     @Column(name = "position")
     private String position;
  

@@ -8,7 +8,9 @@ import org.springframework.stereotype.Repository;
 import com.example.SuperMarket.entity.Product;
  
 @Repository
-public interface Productrepository extends JpaRepository<Product, Long> {
-    // Find product by barcode to check for duplicates
+public interface ProductRepository extends JpaRepository<Product, Long> {
+    
     Optional<Product> findByBarcode(String barcode);
+
+    long countByCategoryId(Long categoryId);
 }

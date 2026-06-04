@@ -6,12 +6,12 @@ import java.util.List;
 import lombok.Data;
  
 @Data
-public class Saleresponsedto {
+public class SaleResponseDto {
     private Long id;
     private LocalDate saleDate;
     private String employeeName;
     private Double subtotal;
     private Double tax;
     private Double total;
-    private List<Saledetailresponsedto> details;
+    private List<SaleDetailResponseDto> details;
 }

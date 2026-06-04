@@ -26,7 +26,7 @@ public class Category {
     @Column(name = "description")
     private String description;
  
-    // One category has many products
+    // categoria tiene muchos productos
     @OneToMany(mappedBy = "category")
     private List<Product> products;
 }

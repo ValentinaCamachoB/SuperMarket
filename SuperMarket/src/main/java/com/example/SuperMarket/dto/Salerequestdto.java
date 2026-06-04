@@ -8,12 +8,12 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
  
 @Data
-public class Salerequestdto {
+public class SaleRequestDto {
  
     @NotNull(message = "Se requiere el ID del empleado")
     private Long employeeId;
  
     @NotEmpty(message = "La venta debe incluir al menos un producto")
     @Valid
-    private List<Saledetailrequestdto> details;
+    private List<SaleDetailRequestDto> details;
 }

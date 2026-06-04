@@ -1,4 +1,4 @@
-package com.example.SuperMarket.Service;
+package com.example.SuperMarket.service;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,14 +6,14 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
-import com.example.SuperMarket.dto.Httpglobalresponse;
-import com.example.SuperMarket.dto.Messageresponsedto;
-import com.example.SuperMarket.dto.Productrequestdto;
-import com.example.SuperMarket.dto.Productresponsedto;
+import com.example.SuperMarket.dto.HttpGlobalResponse;
+import com.example.SuperMarket.dto.MessageResponseDto;
+import com.example.SuperMarket.dto.ProductRequestDto;
+import com.example.SuperMarket.dto.ProductResponseDto;
 import com.example.SuperMarket.entity.Category;
 import com.example.SuperMarket.entity.Product;
-import com.example.SuperMarket.repository.Categoryrepository;
-import com.example.SuperMarket.repository.Productrepository;
+import com.example.SuperMarket.repository.CategoryRepository;
+import com.example.SuperMarket.repository.ProductRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,41 +21,21 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ProductService {
 
-    private final Productrepository productRepository;
-    private final Categoryrepository categoryRepository;
+    private final ProductRepository productRepository;
+    private final CategoryRepository categoryRepository;
 
-    public Messageresponsedto createProduct(Productrequestdto request) {
-        Messageresponsedto response = new Messageresponsedto();
-
-        if (request.getName() == null || request.getName().isEmpty()) {
-            response.setMessage("Product name is required");
-            return response;
-        }
-
-        if (request.getBarcode() == null || request.getBarcode().isEmpty()) {
-            response.setMessage("Barcode is required");
-            return response;
-        }
+    public MessageResponseDto createProduct(ProductRequestDto request) {
+        MessageResponseDto response = new MessageResponseDto();
 
         Optional<Product> productWithSameBarcode = productRepository.findByBarcode(request.getBarcode());
         if (productWithSameBarcode.isPresent()) {
-            response.setMessage("A product with that barcode already exists");
-            return response;
-        }
-
-        if (request.getPrice() == null) {
-            response.setMessage("Price is required");
-            return response;
-        }
-
-        if (request.getCategoryId() == null) {
-            response.setMessage("Category is required");
+            response.setMessage("Ya existe un producto con ese código de barras");
             return response;
         }
 
         Optional<Category> categoryFound = categoryRepository.findById(request.getCategoryId());
         if (categoryFound.isEmpty()) {
-            response.setMessage("Category not found");
+            response.setMessage("Categoría no encontrada");
             return response;
         }
 
@@ -63,78 +43,59 @@ public class ProductService {
         product.setName(request.getName());
         product.setBarcode(request.getBarcode());
         product.setPrice(request.getPrice());
-        product.setStock(request.getStock() != null ? request.getStock() : 0);
+        product.setStock(request.getStock());
         product.setActive(true);
         product.setCategory(categoryFound.get());
         productRepository.save(product);
 
-        response.setMessage("Product created successfully");
+        response.setMessage("Producto creado exitosamente");
         return response;
     }
 
-    public List<Productresponsedto> getProducts() {
-        List<Productresponsedto> productList = new ArrayList<>();
+    public List<ProductResponseDto> getProducts() {
+        List<ProductResponseDto> productList = new ArrayList<>();
         List<Product> productsFound = productRepository.findAll();
 
         for (Product product : productsFound) {
-            Productresponsedto productDTO = new Productresponsedto();
-            productDTO.setId(product.getId());
-            productDTO.setName(product.getName());
-            productDTO.setBarcode(product.getBarcode());
-            productDTO.setPrice(product.getPrice());
-            productDTO.setStock(product.getStock());
-            productDTO.setActive(product.getActive());
-            if (product.getCategory() != null) {
-                productDTO.setCategoryName(product.getCategory().getName());
-            }
-            productList.add(productDTO);
+            productList.add(mapToDTO(product));
         }
 
         return productList;
     }
 
-    public Httpglobalresponse<Productresponsedto> getProduct(Long id) {
-        Httpglobalresponse<Productresponsedto> response = new Httpglobalresponse<>();
+    public HttpGlobalResponse<ProductResponseDto> getProduct(Long id) {
+        HttpGlobalResponse<ProductResponseDto> response = new HttpGlobalResponse<>();
         Optional<Product> productFound = productRepository.findById(id);
 
         if (productFound.isEmpty()) {
-            response.setMessage("Product not found");
+            response.setMessage("Producto no encontrado");
             return response;
         }
 
-        Product product = productFound.get();
-
-        Productresponsedto productDTO = new Productresponsedto();
-        productDTO.setId(product.getId());
-        productDTO.setName(product.getName());
-        productDTO.setBarcode(product.getBarcode());
-        productDTO.setPrice(product.getPrice());
-        productDTO.setStock(product.getStock());
-        productDTO.setActive(product.getActive());
-        if (product.getCategory() != null) {
-            productDTO.setCategoryName(product.getCategory().getName());
-        }
-
-        response.setMessage("Product found");
-        response.setData(productDTO);
+        response.setMessage("Producto encontrado");
+        response.setData(mapToDTO(productFound.get()));
         return response;
     }
 
-    public Httpglobalresponse<Productresponsedto> updateProduct(Long id, Productrequestdto request) {
-        Httpglobalresponse<Productresponsedto> response = new Httpglobalresponse<>();
+    public HttpGlobalResponse<ProductResponseDto> updateProduct(Long id, ProductRequestDto request) {
+        HttpGlobalResponse<ProductResponseDto> response = new HttpGlobalResponse<>();
         Optional<Product> productFound = productRepository.findById(id);
 
         if (productFound.isEmpty()) {
-            response.setMessage("Product not found");
+            response.setMessage("Producto no encontrado");
             return response;
         }
 
-        if (request.getBarcode() != null) {
-            Optional<Product> productWithSameBarcode = productRepository.findByBarcode(request.getBarcode());
-            if (productWithSameBarcode.isPresent() && !productWithSameBarcode.get().getId().equals(id)) {
-                response.setMessage("Another product already uses that barcode");
-                return response;
-            }
+        Optional<Product> productWithSameBarcode = productRepository.findByBarcode(request.getBarcode());
+        if (productWithSameBarcode.isPresent() && !productWithSameBarcode.get().getId().equals(id)) {
+            response.setMessage("Otro producto ya utiliza ese código de barras");
+            return response;
+        }
+
+        Optional<Category> categoryFound = categoryRepository.findById(request.getCategoryId());
+        if (categoryFound.isEmpty()) {
+            response.setMessage("Categoría no encontrada");
+            return response;
         }
 
         Product product = productFound.get();
@@ -142,36 +103,21 @@ public class ProductService {
         product.setBarcode(request.getBarcode());
         product.setPrice(request.getPrice());
         product.setStock(request.getStock());
-
-        if (request.getCategoryId() != null) {
-            Optional<Category> categoryFound = categoryRepository.findById(request.getCategoryId());
-            if (categoryFound.isPresent()) {
-                product.setCategory(categoryFound.get());
-            }
-        }
-
+        product.setCategory(categoryFound.get());
         productRepository.save(product);
 
-        Productresponsedto productDTO = new Productresponsedto();
-        productDTO.setId(product.getId());
-        productDTO.setName(product.getName());
-        productDTO.setBarcode(product.getBarcode());
-        productDTO.setPrice(product.getPrice());
-        productDTO.setStock(product.getStock());
-        productDTO.setActive(product.getActive());
-
-        response.setMessage("Product updated successfully");
-        response.setData(productDTO);
+        response.setMessage("Producto actualizado exitosamente");
+        response.setData(mapToDTO(product));
         return response;
     }
 
-    // Business Rule 1: Soft delete - only deactivates, never physically deletes
-    public Httpglobalresponse<Productresponsedto> deactivateProduct(Long id) {
-        Httpglobalresponse<Productresponsedto> response = new Httpglobalresponse<>();
+
+    public HttpGlobalResponse<ProductResponseDto> deactivateProduct(Long id) {
+        HttpGlobalResponse<ProductResponseDto> response = new HttpGlobalResponse<>();
         Optional<Product> productFound = productRepository.findById(id);
 
         if (productFound.isEmpty()) {
-            response.setMessage("Product not found");
+            response.setMessage("Producto no encontrado");
             return response;
         }
 
@@ -179,7 +125,22 @@ public class ProductService {
         product.setActive(false);
         productRepository.save(product);
 
-        response.setMessage("Product deactivated successfully");
+        response.setMessage("Producto desactivado exitosamente");
+        response.setData(mapToDTO(product));
         return response;
+    }
+
+    private ProductResponseDto mapToDTO(Product product) {
+        ProductResponseDto dto = new ProductResponseDto();
+        dto.setId(product.getId());
+        dto.setName(product.getName());
+        dto.setBarcode(product.getBarcode());
+        dto.setPrice(product.getPrice());
+        dto.setStock(product.getStock());
+        dto.setActive(product.getActive());
+        if (product.getCategory() != null) {
+            dto.setCategoryName(product.getCategory().getName());
+        }
+        return dto;
     }
 }

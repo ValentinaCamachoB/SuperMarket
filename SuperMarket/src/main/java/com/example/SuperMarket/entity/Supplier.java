@@ -32,7 +32,6 @@ public class Supplier {
     @Column(name = "email")
     private String email;
  
-    // Inverse side of the ManyToMany relationship with products
     @ManyToMany(mappedBy = "suppliers")
     private List<Product> products;
 }

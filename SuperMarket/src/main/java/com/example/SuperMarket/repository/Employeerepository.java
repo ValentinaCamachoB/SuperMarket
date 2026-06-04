@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 import com.example.SuperMarket.entity.Employee;
  
 @Repository
-public interface Employeerepository extends JpaRepository<Employee, Long> {
+public interface EmployeeRepository extends JpaRepository<Employee, Long> {
  
     /**
      * Buscar por idNumber para validar que no haya duplicados

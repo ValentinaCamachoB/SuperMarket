@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
  
 @Data
-public class Warehouseentryrequestdto {
+public class WarehouseEntryRequestDto {
  
     @NotNull(message = "El ID del producto es requerido")
     private Long productId;

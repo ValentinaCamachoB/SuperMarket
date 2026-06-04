@@ -1,4 +1,4 @@
-package com.example.SuperMarket.Service;
+package com.example.SuperMarket.service;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,129 +6,133 @@ import java.util.Optional;
  
 import org.springframework.stereotype.Service;
  
-import com.example.SuperMarket.dto.Categoryrequestdto;
-import com.example.SuperMarket.dto.Categoryresponsedto;
-import com.example.SuperMarket.dto.Httpglobalresponse;
-import com.example.SuperMarket.dto.Messageresponsedto;
-import com.example.SuperMarket.dto.Productresponsedto;
+import com.example.SuperMarket.dto.CategoryRequestDto;
+import com.example.SuperMarket.dto.CategoryResponseDto;
+import com.example.SuperMarket.dto.HttpGlobalResponse;
+import com.example.SuperMarket.dto.MessageResponseDto;
+import com.example.SuperMarket.dto.ProductResponseDto;
 import com.example.SuperMarket.entity.Category;
 import com.example.SuperMarket.entity.Product;
-import com.example.SuperMarket.repository.Categoryrepository;
- 
+import com.example.SuperMarket.repository.CategoryRepository;
+import com.example.SuperMarket.repository.ProductRepository;
+
 import lombok.RequiredArgsConstructor;
- 
+
 @Service
 @RequiredArgsConstructor
 public class CategoryService {
- 
-    private final Categoryrepository categoryRepository;
- 
-    public Messageresponsedto createCategory(Categoryrequestdto request) {
-        Messageresponsedto response = new Messageresponsedto();
- 
-        if (request.getName() == null || request.getName().isEmpty()) {
-            response.setMessage("Nombre de categoria es requerido");
-            return response;
-        }
- 
+
+    private final CategoryRepository categoryRepository;
+    private final ProductRepository productRepository;
+
+    public MessageResponseDto createCategory(CategoryRequestDto request) {
+        MessageResponseDto response = new MessageResponseDto();
+
         Category category = new Category();
         category.setName(request.getName());
         category.setDescription(request.getDescription());
         categoryRepository.save(category);
- 
-        response.setMessage("La categoria fue creada completamente");
+
+        response.setMessage("La categoría fue creada exitosamente");
         return response;
     }
- 
-    public List<Categoryresponsedto> getCategories() {
-        List<Categoryresponsedto> categoryList = new ArrayList<>();
+
+    public List<CategoryResponseDto> getCategories() {
+        List<CategoryResponseDto> categoryList = new ArrayList<>();
         List<Category> categoriesFound = categoryRepository.findAll();
- 
+
         for (Category category : categoriesFound) {
-            Categoryresponsedto categoryDTO = new Categoryresponsedto();
+            CategoryResponseDto categoryDTO = new CategoryResponseDto();
             categoryDTO.setId(category.getId());
             categoryDTO.setName(category.getName());
             categoryDTO.setDescription(category.getDescription());
             categoryList.add(categoryDTO);
         }
- 
+
         return categoryList;
     }
- 
-    public Httpglobalresponse<Categoryresponsedto> getCategory(Long id) {
-        Httpglobalresponse<Categoryresponsedto> response = new Httpglobalresponse<>();
+
+    public HttpGlobalResponse<CategoryResponseDto> getCategory(Long id) {
+        HttpGlobalResponse<CategoryResponseDto> response = new HttpGlobalResponse<>();
         Optional<Category> categoryFound = categoryRepository.findById(id);
- 
+
         if (categoryFound.isEmpty()) {
-            response.setMessage("Categoria no encontrada");
+            response.setMessage("Categoría no encontrada");
             return response;
         }
- 
+
         Category category = categoryFound.get();
- 
-        Categoryresponsedto categoryDTO = new Categoryresponsedto();
+
+        CategoryResponseDto categoryDTO = new CategoryResponseDto();
         categoryDTO.setId(category.getId());
         categoryDTO.setName(category.getName());
         categoryDTO.setDescription(category.getDescription());
- 
-        
-        List<Productresponsedto> activeProducts = new ArrayList<>();
+
+        List<ProductResponseDto> activeProducts = new ArrayList<>();
         if (category.getProducts() != null) {
             for (Product product : category.getProducts()) {
                 if (product.getActive() != null && product.getActive()) {
-                    Productresponsedto productDTO = new Productresponsedto();
+                    ProductResponseDto productDTO = new ProductResponseDto();
                     productDTO.setId(product.getId());
                     productDTO.setName(product.getName());
                     productDTO.setBarcode(product.getBarcode());
                     productDTO.setPrice(product.getPrice());
                     productDTO.setStock(product.getStock());
                     productDTO.setActive(product.getActive());
+                    productDTO.setCategoryName(category.getName());
                     activeProducts.add(productDTO);
                 }
             }
         }
         categoryDTO.setProducts(activeProducts);
- 
-        response.setMessage("Categoria encontrada");
+
+        response.setMessage("Categoría encontrada");
         response.setData(categoryDTO);
         return response;
     }
- 
-    public Httpglobalresponse<Categoryresponsedto> updateCategory(Long id, Categoryrequestdto request) {
-        Httpglobalresponse<Categoryresponsedto> response = new Httpglobalresponse<>();
+
+    public HttpGlobalResponse<CategoryResponseDto> updateCategory(Long id, CategoryRequestDto request) {
+        HttpGlobalResponse<CategoryResponseDto> response = new HttpGlobalResponse<>();
         Optional<Category> categoryFound = categoryRepository.findById(id);
- 
+
         if (categoryFound.isEmpty()) {
-            response.setMessage("La categoria no se encuentra");
+            response.setMessage("Categoría no encontrada");
             return response;
         }
- 
+
         Category category = categoryFound.get();
         category.setName(request.getName());
         category.setDescription(request.getDescription());
         categoryRepository.save(category);
- 
-        Categoryresponsedto categoryDTO = new Categoryresponsedto();
+
+        CategoryResponseDto categoryDTO = new CategoryResponseDto();
         categoryDTO.setId(category.getId());
         categoryDTO.setName(category.getName());
         categoryDTO.setDescription(category.getDescription());
- 
-        response.setMessage("Categoria actualizada completamente");
+
+        response.setMessage("Categoría actualizada exitosamente");
         response.setData(categoryDTO);
         return response;
     }
- 
-    public Httpglobalresponse<Categoryresponsedto> deleteCategory(Long id) {
-        Httpglobalresponse<Categoryresponsedto> response = new Httpglobalresponse<>();
+
+    public HttpGlobalResponse<CategoryResponseDto> deleteCategory(Long id) {
+        HttpGlobalResponse<CategoryResponseDto> response = new HttpGlobalResponse<>();
         Optional<Category> categoryFound = categoryRepository.findById(id);
- 
+
         if (categoryFound.isEmpty()) {
-            response.setMessage("Categoria no encontrada");
+            response.setMessage("Categoría no encontrada");
             return response;
         }
- 
+
+        long productCount = productRepository.countByCategoryId(id);
+        if (productCount > 0) {
+            response.setMessage("No se puede eliminar la categoría porque tiene "
+                    + productCount + " producto(s) asociado(s).");
+            return response;
+        }
+
         categoryRepository.deleteById(id);
-        response.setMessage("Categoria eliminada completamente");
+        response.setMessage("Categoría eliminada exitosamente");
         return response;
     }
 }

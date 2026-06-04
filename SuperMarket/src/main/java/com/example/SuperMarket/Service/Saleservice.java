@@ -1,77 +1,67 @@
-package com.example.SuperMarket.Service;
+package com.example.SuperMarket.service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
  
 import org.springframework.stereotype.Service;
  
-import com.example.SuperMarket.dto.Httpglobalresponse;
-import com.example.SuperMarket.dto.Messageresponsedto;
-import com.example.SuperMarket.dto.Saledetailrequestdto;
-import com.example.SuperMarket.dto.Saledetailresponsedto;
-import com.example.SuperMarket.dto.Salerequestdto;
-import com.example.SuperMarket.dto.Saleresponsedto;
+import com.example.SuperMarket.dto.HttpGlobalResponse;
+import com.example.SuperMarket.dto.MessageResponseDto;
+import com.example.SuperMarket.dto.SaleDetailRequestDto;
+import com.example.SuperMarket.dto.SaleDetailResponseDto;
+import com.example.SuperMarket.dto.SaleRequestDto;
+import com.example.SuperMarket.dto.SaleResponseDto;
 import com.example.SuperMarket.entity.Employee;
 import com.example.SuperMarket.entity.Product;
 import com.example.SuperMarket.entity.Sale;
 import com.example.SuperMarket.entity.SaleDetail;
-import com.example.SuperMarket.repository.Employeerepository;
-import com.example.SuperMarket.repository.Productrepository;
-import com.example.SuperMarket.repository.Salerepository;
- 
+import com.example.SuperMarket.repository.EmployeeRepository;
+import com.example.SuperMarket.repository.ProductRepository;
+import com.example.SuperMarket.repository.SaleRepository;
+
 import lombok.RequiredArgsConstructor;
- 
+
 @Service
 @RequiredArgsConstructor
-public class Saleservice {
- 
-    private final Salerepository saleRepository;
-    private final Employeerepository employeeRepository;
-    private final Productrepository productRepository;
-    
+public class SaleService {
 
-    /**
-     * Crea una nueva venta, Valida que exista un empleado, que haya productos en la venta y que todos tengan stock suficiente antes de procesarla.
-     */
-    public Messageresponsedto createSale(Salerequestdto request) {
-        Messageresponsedto response = new Messageresponsedto();
- 
-        if (request.getEmployeeId() == null) {
-            response.setMessage("Se requiere un empleado para procesar la venta");
-            return response;
-        }
- 
+    private static final double TAX_RATE = 0.19;
+
+    private final SaleRepository saleRepository;
+    private final EmployeeRepository employeeRepository;
+    private final ProductRepository productRepository;
+
+    public MessageResponseDto createSale(SaleRequestDto request) {
+        MessageResponseDto response = new MessageResponseDto();
+
         Optional<Employee> employeeFound = employeeRepository.findById(request.getEmployeeId());
         if (employeeFound.isEmpty()) {
             response.setMessage("Empleado no encontrado");
             return response;
         }
- 
-        if (request.getDetails() == null || request.getDetails().isEmpty()) {
-            response.setMessage("La venta debe tener al menos un producto");
-            return response;
-        }
- 
-         /**
-         * Regla de negocio 2: Validar el stock de TODOS los productos antes de procesar la venta
-         */
-        for (Saledetailrequestdto detail : request.getDetails()) {
-            Optional<Product> productFound = productRepository.findById(detail.getProductId());
- 
-            if (productFound.isEmpty()) {
-                response.setMessage("Producto con ID " + detail.getProductId() + " no encontrado");
-                return response;
+
+        Map<Long, Product> validatedProducts = new HashMap<>();
+        for (SaleDetailRequestDto detail : request.getDetails()) {
+            Product product = validatedProducts.get(detail.getProductId());
+            if (product == null) {
+                Optional<Product> productFound = productRepository.findById(detail.getProductId());
+                if (productFound.isEmpty()) {
+                    response.setMessage("Producto con ID " + detail.getProductId() + " no encontrado");
+                    return response;
+                }
+                product = productFound.get();
+                validatedProducts.put(product.getId(), product);
             }
- 
-            Product product = productFound.get();
- 
+
             if (product.getActive() == null || !product.getActive()) {
-                response.setMessage("El producto " + product.getName() + " no está disponibl");
+                response.setMessage("El producto " + product.getName() + " no está disponible");
                 return response;
             }
- 
+
             int availableStock = product.getStock() != null ? product.getStock() : 0;
             if (availableStock < detail.getQuantity()) {
                 response.setMessage("Stock insuficiente para el producto: " + product.getName()
@@ -80,26 +70,20 @@ public class Saleservice {
                 return response;
             }
         }
- 
-         /**
-         * Crear encabezado de la venta
-         */
+
         Sale sale = new Sale();
         sale.setSaleDate(LocalDate.now());
         sale.setEmployee(employeeFound.get());
- 
+
         List<SaleDetail> detailList = new ArrayList<>();
         double saleSubtotal = 0.0;
- 
-         /**
-         * Procesar cada detalle de la venta, Regla de negocio 1: descontar stock automáticamente
-         */
-        for (Saledetailrequestdto detailRequest : request.getDetails()) {
-            Product product = productRepository.findById(detailRequest.getProductId()).get();
- 
+
+        for (SaleDetailRequestDto detailRequest : request.getDetails()) {
+            Product product = validatedProducts.get(detailRequest.getProductId());
+
             product.setStock(product.getStock() - detailRequest.getQuantity());
             productRepository.save(product);
- 
+
             SaleDetail detail = new SaleDetail();
             detail.setProduct(product);
             detail.setQuantity(detailRequest.getQuantity());
@@ -107,79 +91,66 @@ public class Saleservice {
             double lineSubtotal = product.getPrice() * detailRequest.getQuantity();
             detail.setSubtotal(lineSubtotal);
             detail.setSale(sale);
- 
+
             detailList.add(detail);
             saleSubtotal += lineSubtotal;
         }
- 
-        /**
-         * Regla de negocio 3:Calcular subtotal, IVA (19%) y total automáticamente
-         */
-        double tax = saleSubtotal * 0.19;
+
+        double tax = saleSubtotal * TAX_RATE;
         double total = saleSubtotal + tax;
- 
+
         sale.setSubtotal(saleSubtotal);
         sale.setTax(tax);
         sale.setTotal(total);
         sale.setDetails(detailList);
         saleRepository.save(sale);
- 
+
         response.setMessage("Venta procesada exitosamente. Total: $" + String.format("%.2f", total));
         return response;
     }
-    
-    /**
-     * Obtiene la lista de todas las ventas.
-     */
-    public List<Saleresponsedto> getSales() {
-        List<Saleresponsedto> saleList = new ArrayList<>();
+
+    public List<SaleResponseDto> getSales() {
+        List<SaleResponseDto> saleList = new ArrayList<>();
         List<Sale> salesFound = saleRepository.findAll();
- 
+
         for (Sale sale : salesFound) {
-            Saleresponsedto saleDTO = buildSaleResponseDTO(sale);
-            saleList.add(saleDTO);
+            saleList.add(buildSaleResponseDTO(sale));
         }
- 
+
         return saleList;
     }
+
     
-    /**
-     * Obtiene una venta por su identificador.
-     */
-    public Httpglobalresponse<Saleresponsedto> getSale(Long id) {
-        Httpglobalresponse<Saleresponsedto> response = new Httpglobalresponse<>();
+    public HttpGlobalResponse<SaleResponseDto> getSale(Long id) {
+        HttpGlobalResponse<SaleResponseDto> response = new HttpGlobalResponse<>();
         Optional<Sale> saleFound = saleRepository.findById(id);
- 
+
         if (saleFound.isEmpty()) {
             response.setMessage("Venta no encontrada");
             return response;
         }
- 
-        Saleresponsedto saleDTO = buildSaleResponseDTO(saleFound.get());
+
         response.setMessage("Venta encontrada");
-        response.setData(saleDTO);
+        response.setData(buildSaleResponseDTO(saleFound.get()));
         return response;
     }
- 
-     /**
-     * Método auxiliar privado para construir el DTO de respuesta y evitar repetir lógica de mapeo.
-     */
-    private Saleresponsedto buildSaleResponseDTO(Sale sale) {
-        Saleresponsedto saleDTO = new Saleresponsedto();
+
+    private SaleResponseDto buildSaleResponseDTO(Sale sale) {
+        SaleResponseDto saleDTO = new SaleResponseDto();
         saleDTO.setId(sale.getId());
         saleDTO.setSaleDate(sale.getSaleDate());
         saleDTO.setSubtotal(sale.getSubtotal());
         saleDTO.setTax(sale.getTax());
         saleDTO.setTotal(sale.getTotal());
- 
+
         if (sale.getEmployee() != null) {
             saleDTO.setEmployeeName(sale.getEmployee().getName());
         }
- 
-        List<Saledetailresponsedto> detailList = new ArrayList<>();
+
+        List<SaleDetailResponseDto> detailList = new ArrayList<>();
         if (sale.getDetails() != null) {
             for (SaleDetail detail : sale.getDetails()) {
-                Saledetailresponsedto detailDTO = new Saledetailresponsedto();
+                SaleDetailResponseDto detailDTO = new SaleDetailResponseDto();
                 detailDTO.setId(detail.getId());
                 detailDTO.setQuantity(detail.getQuantity());
                 detailDTO.setUnitPrice(detail.getUnitPrice());

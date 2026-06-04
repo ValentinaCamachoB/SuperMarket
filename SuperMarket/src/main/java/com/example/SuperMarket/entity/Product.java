@@ -35,16 +35,14 @@ public class Product {
     @Column(name = "stock")
     private Integer stock;
  
-    // Soft delete: true = active, false = inactive (never physically deleted)
-    @Column(name = "active")
     private Boolean active;
  
-    // Many products belong to one category
+    // productos pertenecen a una categoria
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
  
-    // Many products can have many suppliers
+    // productos pueden tener muchos provedores
     @ManyToMany
     @JoinTable(
         name = "product_supplier",
